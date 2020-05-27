@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>show image encode with base64</title>
+</head>
+<body>
+<h1>
+    黑化肥会发挥发灰
+</h1>
+{% if img_stream %}
+    <img src="data:image/jpeg;base64,{{ img_stream }}">
+    <textarea>
+    {{ len }}
+    </textarea>
+{% endif %}
+{% if img_static %}
+    <img src="data:image/png;base64,{{ img_static }}">
+    <textarea>
+    {{ len }}
+    </textarea>
+{% endif %}
+
+</body>
+</html>

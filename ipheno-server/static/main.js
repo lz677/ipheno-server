@@ -228,7 +228,7 @@ class AppComponent {
             printer: '未连接',
             light: false,
             fan: false,
-            plate: '--',
+            plate: false,
             main: '未连接'
         };
         this.systemInfo = {
@@ -282,7 +282,7 @@ class AppComponent {
             this.http.get('/open-camera', { responseType: 'text' }).subscribe((data) => {
                 console.log(data);
                 if (data === 'ok') {
-                    this.openCamera = true;
+                this.openCamera = true;
                 }
                 else {
                     this.message.create('error', `相机故障，无法打开`);

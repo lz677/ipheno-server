@@ -21,9 +21,9 @@ class Hardware:
         camera : '未连接' '已连接' '故障'
         balance: '未连接' '重量'
         printer: '未连接' '已连接' '打印中'
-        light :   True('开')  False('关') '故障'
-        fan :     False('开')  False('关') '故障'
-        plate:    '弹出' '关闭'
+        light :   True  False'故障'
+        fan :     True  False '故障'
+        plate:    True  False
         main：     '运行中'
         """
         # initial status of hardware for reset
@@ -33,7 +33,7 @@ class Hardware:
             'printer': '未连接',
             'light': False,
             'fan': False,
-            'plate': '关闭',
+            'plate': False,
             'main': '运行中'
         }
 
@@ -45,7 +45,7 @@ class Hardware:
             'printer': '未连接',
             'light': False,
             'fan': False,
-            'plate': '弹出',
+            'plate': False,
             'main': '运行中'
         }
 

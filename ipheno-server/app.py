@@ -5,6 +5,7 @@ from flask import Flask, render_template, Response, request, send_file, redirect
 from flask.json import jsonify
 from base import Hardware
 from base import Results
+from base import utility
 
 app = Flask(__name__)
 
@@ -34,7 +35,7 @@ def status_all():
 
 
 # 总控状态
-@app.route('/system/<string:cmd>', methods=["GET", "POST"])
+@app.route('/system/<string:cmd>')
 def system(cmd):
     # print(cmd)
     """
@@ -45,15 +46,23 @@ def system(cmd):
         return jsonify(app.config['hardware'].get_system_info())
     elif cmd == "set-staticIp":
         if request.method == "GET":
-            return render_template("set-ip.html", system_ip_port=app.config['hardware'].system_info['staticIP'])
+            ip = request.args.get("staticIp")
+            port = request.args.get("port")
+            # ip和port 都合法才可以修改
+            if ip is not None or port is not None:
+                if not utility.is_ipv4(ip):
+                    return jsonify({"state": "invalid_ip"})
+                if not utility.is_port(port):
+                    return jsonify({"state": "invalid_port"})
+                app.config['hardware'].system_info["staticIP"]["ip"] = request.args.get("staticIp")
+                app.config['hardware'].system_info["staticIP"]["port"] = request.args.get("port")
+            else:
+                return jsonify({"state": "default"})
+                # Web测试功能时使用
+                # pass
+            # Web测试功能时使用
+            # return render_template("set-ip.html", system_ip_port=app.config['hardware'].system_info['staticIP'])
 
-        if request.method == "POST":
-            # print(request.form.get("staticIp"))
-            # print(request.form.get("port"))
-            # TODO:判断ip和port是否合法
-            app.config['hardware'].system_info["staticIP"]["ip"] = request.form.get("staticIp")
-            app.config['hardware'].system_info["staticIP"]["port"] = request.form.get("port")
-            return "ok"
     elif cmd == "restart":
         # 重启总控，接受到GET的请求之后，重启总控，返回总控的状态
         # TODO：接收到重启 则修改主控状态为 ‘重启中’
@@ -70,23 +79,28 @@ def system(cmd):
 # 相机
 @app.route('/open-camera')
 def open_camera():
-    print('open_camera')
+    # print('open_camera')
     if not app.config['hardware'].capture.isOpened():
         app.config['hardware'].capture.open()
     app.config['hardware'].capture.start_stream()
-    return "ok" if app.config['hardware'].capture.isOpened() else "failed"  # ok, failed
+    return 'ok' if app.config['hardware'].capture.isOpened() else 'failed'
+    # return (jsonify({'state': "ok"}) if app.config['hardware'].capture.isOpened()
+    #         else jsonify({'state': "failed"}))  # ok, failed
 
 
 @app.route('/close-camera')
 def close_camera():
-    print("close_camera")
+    # print("close_camera")
     app.config["hardware"].capture.stop_stream()
     # app.config['hardware'].capture.release()  # cv2的release()有bug
-    return "ok"  # ok, failed
+    return 'ok'
+    # 直接返回ok即可
+    # return (jsonify({'state': "ok"}) if app.config['hardware'].capture.should_stream_stop
+    #         else jsonify({'state': "failed"}))  # ok, failed
 
 
 # 照明
-@app.route('/light/<cmd>')
+@app.route('/light/<string:cmd>')
 def light(cmd):
     """
     open or close the light
@@ -97,21 +111,25 @@ def light(cmd):
     if cmd == "open":
         app.config['hardware'].all_status["light"] = True
         if app.config['hardware'].all_status["light"]:
-            return "ok"
+            # return 'ok'
+            return jsonify({'state': "ok"})
         else:
-            return "failed"
+            # return 'failed'
+            return jsonify({'state': "failed"})
     elif cmd == "close":
         app.config['hardware'].all_status["light"] = False
         if not app.config['hardware'].all_status["light"]:
-            return "ok"
+            # return 'ok'
+            return jsonify({'state': "ok"})
         else:
-            return "failed"
+            # return 'failed'
+            return jsonify({'state': "failed"})
     else:
-        return "404 [check you url]"
+        return jsonify({"error": "404 [check you url]"})
 
 
 # 风扇
-@app.route('/fan/<cmd>')
+@app.route('/fan/<string:cmd>')
 def fan(cmd):
     """
     open or close the fan
@@ -122,21 +140,21 @@ def fan(cmd):
     if cmd == "open":
         app.config['hardware'].all_status["fan"] = True
         if app.config['hardware'].all_status["fan"]:
-            return "ok"
+            return jsonify({'state': "ok"})
         else:
-            return "failed"
+            return jsonify({'state': "failed"})
     elif cmd == "close":
         app.config['hardware'].all_status['fan'] = False
         if not app.config['hardware'].all_status['fan']:
-            return "ok"
+            return jsonify({'state': "ok"})
         else:
-            return "failed"
+            return jsonify({'state': "failed"})
     else:
-        return "404 [check you url]"
+        return jsonify({"error": "404 [check you url]"})
 
 
 # 托盘
-@app.route('/plate/<cmd>')
+@app.route('/plate/<string:cmd>')
 def plate(cmd):
     """
     open or close the plate
@@ -147,42 +165,68 @@ def plate(cmd):
     if cmd == "open":
         app.config['hardware'].all_status['plate'] = True
         if app.config['hardware'].all_status['plate']:
-            return "ok"
+            # return 'ok'
+            return jsonify({'state': "ok"})
         else:
-            return "failed"
+            # return 'failed'
+            return jsonify({'state': "failed"})
     elif cmd == "close":
         app.config['hardware'].all_status['plate'] = False
         if not app.config['hardware'].all_status['plate']:
-            return "ok"
+            # return 'ok'
+            return jsonify({'state': "ok"})
         else:
-            return "failed"
+            # return 'failed'
+            return jsonify({'state': "failed"})
     else:
-        return "404 [check you url]"
+        return jsonify({"error": "404 [check you url]"})
 
 
 # 打印机
-@app.route('/printer')
-def printer():
+@app.route('/printer/<string:cmd>', methods=["GET", "POST"])
+def printer(cmd):
     """
     TODO: 待完善
     print the  results
     :return:
     """
-    if app.config['hardware'].all_status['printer'] == '已连接':
-        app.config['hardware'].all_status['printer'] = '打印中'
-        return "ok"
-    else:
-        return "failed"
+    if cmd == "connect":
+        app.config['hardware'].all_status['printer'] = '已连接'
+        if app.config['hardware'].all_status['printer'] in ('已连接', '打印中'):
+            return jsonify({"state": 'connected'})
+        elif app.config['hardware'].all_status['printer'] == '未连接':
+            return jsonify({"state": 'disconnected'})
+        else:
+            return jsonify({"error": "error"})
+
+    if cmd == 'print':
+        if app.config['hardware'].all_status['printer'] == '已连接':
+            app.config['hardware'].all_status['printer'] = '打印中'
+            if app.config['hardware'].all_status['printer'] == '打印中':
+                return jsonify({"state": 'printing'})
+        else:
+            return jsonify({"error": "error"})
 
 
 # 实时图像
-@app.route('/realtime-img', methods=["POST", "GET"])
+@app.route('/realtime-image')
+def realtime_image():
+    if not app.config['hardware'].capture.isOpened():
+        app.config['hardware'].capture.open()
+    app.config['hardware'].capture.start_stream()
+    # # img_path = './static/1.jpg'
+    img_stream = app.config['hardware'].capture.return_img_stream()
+    length = len(img_stream)
+    # print(img_stream)
+    # return Response(app.config['hardware'].capture.return_img_stream())
+    return render_template('testbase64.html', img_stream=img_stream, len=length)
+
+
+# 实时图像
+@app.route('/realtime-img')
 def realtime_img():
-    if request.method == "GET":
-        return Response(app.config['hardware'].capture.gen_stream(),
-                        mimetype='multipart/x-mixed-replace; boundary=frame')
-    elif request.method == "POST":
-        return send_file('./static/1.jpg')
+    return Response(app.config['hardware'].capture.gen_stream(),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 # 图片传输
@@ -191,7 +235,9 @@ def realtime_img():
 def static_image(cmd):
     if cmd == "static_image":
         # print(type(send_file('./static/1.jpg')))
-        return send_file('./static/1.jpg')
+        img_stream = app.config['hardware'].capture.return_static_img()
+        length = len(img_stream)
+        return render_template('testbase64.html', img_static=img_stream, len=length)
         # return render_template('sta_img_show.html')
     elif cmd == "results":
         results = app.config['results'].get_image_parameters()
@@ -216,8 +262,8 @@ def test():
     if request.method == "GET":
         return render_template('test.html')
     elif request.method == "POST":
-        # return send_file('./static/1.jpg')
-        return render_template('sta_img_show.html')
+        return send_file('./static/1.jpg')
+        # return render_template('sta_img_show.html')
 
 
 @app.route('/testrealtime')

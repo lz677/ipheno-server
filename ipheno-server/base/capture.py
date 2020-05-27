@@ -13,6 +13,7 @@ Code is far away from bugs with the god animal protecting
 import cv2
 import numpy as np
 import time
+import base64
 
 
 class CaptureWebCam:
@@ -21,6 +22,7 @@ class CaptureWebCam:
         self.cap = cv2.VideoCapture()
         self.will_quit = False
         self.save_img = False
+        self.img_stream = "NONE"
         _, self.blackJpeg = cv2.imencode('.jpg', np.zeros(shape=(480, 720), dtype=np.uint8))
 
         self.should_stream_stop = False
@@ -57,6 +59,36 @@ class CaptureWebCam:
             # else:
             #     yield (b'--frame\r\n'
             #            b'Content-Type: image/jpeg\r\n\r\n' + self.blackJpeg.tobytes() + b'\r\n\r\n')
+
+    def return_img_stream(self):
+        while not self.will_quit:
+            if self.cap.isOpened() and not self.should_stream_stop:
+                ret, self.img_stream = self.read()
+                # print(frame)
+                ret, jpeg = cv2.imencode('.jpg', self.img_stream)
+                img_stream = base64.b64encode(jpeg)
+                img_stream = str(img_stream, 'utf8')
+                return img_stream
+                # yield (b'--frame\r\n'
+                #        b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
+            else:
+                time.sleep(0.5)
+        # frame = cv2.imread(img_local_path)
+        # ret, jpeg = cv2.imencode('.jpg', frame)
+        # # with open(img_local_path, 'rb') as img:
+        # #     self.img_stream = img.read()
+        # self.img_stream = base64.b64encode(jpeg)
+        # self.img_stream = str(self.img_stream, 'utf8')
+        # return self.img_stream
+
+    def return_static_img(self):
+        if self.img_stream == "NONE":
+            return "NONE"
+        else:
+            ret, jpeg = cv2.imencode('.png', self.img_stream)
+            img_stream = base64.b64encode(jpeg)
+            img_stream = str(img_stream, 'utf8')
+            return img_stream
 
     def release(self):
         self.will_quit = True
