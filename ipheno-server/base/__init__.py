@@ -14,5 +14,6 @@ __VERSION__ = '0.0.1'
 from .utility import load_data, save_data
 from .capture import CaptureWebCam as Capture
 from .hardware import Hardware
+from .results import Results
 
 __all__ = ['Capture', 'Hardware', '__VERSION__', 'load_data', 'save_data']

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>照片</title>
+</head>
+<body>
+<h1>静态照片</h1>
+<img src="{{ url_for('static_image', cmd='static_image') }}"><br>
+<form>
+    <input type="submit" value="保存" name="save">
+    <input type="submit" value="返回" name="return">
+</form>
+
+</body>
+</html>

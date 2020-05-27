@@ -20,6 +20,7 @@ class CaptureWebCam:
         super().__init__()
         self.cap = cv2.VideoCapture()
         self.will_quit = False
+        self.save_img = False
         _, self.blackJpeg = cv2.imencode('.jpg', np.zeros(shape=(480, 720), dtype=np.uint8))
 
         self.should_stream_stop = False
@@ -44,7 +45,11 @@ class CaptureWebCam:
             if self.cap.isOpened() and not self.should_stream_stop:
                 # print('get stream')
                 ret, frame = self.read()
+                # if self.save_img:
+                cv2.imwrite('./static/1.jpg', frame)
+
                 ret, jpeg = cv2.imencode('.jpg', frame)
+
                 yield (b'--frame\r\n'
                        b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
             else:

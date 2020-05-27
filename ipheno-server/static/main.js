@@ -259,8 +259,9 @@ class AppComponent {
             console.log(error);
         });
     }
+
     getSystemInfo() {
-        this.http.get('/system-info').subscribe((data) => {
+        this.http.get('/system/info').subscribe((data) => {
             this.systemInfo = data;
             console.log(data);
         }, error => {
@@ -268,10 +269,12 @@ class AppComponent {
             console.log(error);
         });
     }
+
     onMenuItemClicked(viewName) {
         this.currentView = viewName;
         console.log('onMenuItemClicked', this.currentView);
     }
+
     onOpenCameraClicked() {
         console.log('onOpenCameraClicked');
         this.isOpenCameraBtLoading = true;
@@ -314,6 +317,7 @@ class AppComponent {
             });
         }
     }
+
     onSwitchChanged(type) {
         console.log('onSwitchChanged', type);
         if (type === 'fan') {

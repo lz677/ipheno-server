@@ -5,10 +5,12 @@
     <title>setIP</title>
 </head>
 <body>
-<form>
-    IP地址：<input type="text" name="staticIp">
-    端口：<input type="text" name="port">
-    <input type="submit" value="确定">
+<form action="" method="post">
+    当前IP地址：{{ system_ip_port.ip }}
+    当前端口：{{ system_ip_port.port }}<br>
+    IP地址：<input type="text" name="staticIp"><br>
+    端口：<input type="text" name="port"><br>
+    <input type="submit" value="确定修改">
 </form>>
 </body>
 </html>
