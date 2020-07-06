@@ -208,7 +208,7 @@ def printer(cmd):
             return jsonify({"error": "error"})
 
 
-# 实时图像
+# 实时图像 base64
 @app.route('/realtime-image')
 def realtime_image():
     if not app.config['hardware'].capture.isOpened():
@@ -222,7 +222,7 @@ def realtime_image():
     return render_template('testbase64.html', img_stream=img_stream, len=length)
 
 
-# 实时图像
+# 实时图像 b''
 @app.route('/realtime-img')
 def realtime_img():
     return Response(app.config['hardware'].capture.gen_stream(),
@@ -241,54 +241,74 @@ def static_image(cmd):
         # return render_template('sta_img_show.html')
     elif cmd == "results":
         results = app.config['results'].get_image_parameters()
+        # 算法返回的图片 以 base64 的方式 存储在 imageBase64的属性里。
         results.update(app.config['results'].get_image_info())
         return jsonify(results)
-    elif cmd == 'realtime':
-        # return redirect('/realtime-img')
-        if not app.config['hardware'].capture.isOpened():
-            app.config['hardware'].capture.open()
-        app.config['hardware'].capture.start_stream()
-        return Response(app.config['hardware'].capture.gen_stream(),
-                        mimetype='multipart/x-mixed-replace; boundary=frame')
     else:
         return "404 [check you url]"
 
 
-# TODO 测试完成后删除
-@app.route('/test', methods=["GET", "POST"])
-def test():
-    print(request.method)
+# # TODO 测试完成后删除
+# @app.route('/test', methods=["GET", "POST"])
+# def test():
+#     print(request.method)
+#
+#     if request.method == "GET":
+#         return render_template('test.html')
+#     elif request.method == "POST":
+#         return send_file('./static/1.jpg')
+#         # return render_template('sta_img_show.html')
+#
+#
+# @app.route('/testrealtime')
+# def testrealtime():
+#     if not app.config['hardware'].capture.isOpened():
+#         app.config['hardware'].capture.open()
+#     app.config['hardware'].capture.start_stream()
+#     return Response(app.config['hardware'].capture.gen_stream(),
+#                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
-    if request.method == "GET":
-        return render_template('test.html')
-    elif request.method == "POST":
-        return send_file('./static/1.jpg')
-        # return render_template('sta_img_show.html')
 
-
-@app.route('/testrealtime')
-def testrealtime():
-    if not app.config['hardware'].capture.isOpened():
-        app.config['hardware'].capture.open()
-    app.config['hardware'].capture.start_stream()
-    return Response(app.config['hardware'].capture.gen_stream(),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
-
-
-@app.route('/static-image', methods=["GET", "POST"])
-def static_image2():
+@app.route('/results', methods=["GET", "POST"])
+def results():
     if request.method == "GET":
         return render_template("staticimage.html")
+
     if request.method == "POST":
-        image = request.files.get("image")
-        image.save('./static/1.jpg')
-        return "ok"
+        if request.args.get("remote") == '1':
+            # TODO base64还是file格式有待确定
+            image = request.files.get("image")
+            # 两种方式 1. 远程的图片 接收图片和名称  2. 总控传递过去的图片 只接受名称（核对方式）
+            if utility.is_img(image.filename):
+                # path = ''
+                image.save('./static/' + image.filename)
+                # TODO 调用算法 算法直接读取存储图片
+
+                # 返回结果
+                app.config['results'].img_info["imageName"] = image.filename
+                app.config['results'].img_info["image"] = './static/' + image.filename
+                cal_results = app.config['results'].get_image_parameters()
+                # 算法返回的图片 以 base64 的方式 存储在 imageBase64的属性里。
+                cal_results.update(app.config['results'].get_image_info())
+                return jsonify(cal_results)
+            else:
+                return jsonify({'state': 'check your file'})
+        elif request.args.get("imageName") is not None:
+            # TODO 调用算法 传递给算法参数
+            # 返回结果
+            app.config['results'].img_info["imageName"] = request.args.get("imageName")
+            cal_results = app.config['results'].get_image_parameters()
+            # 算法返回的图片 以 base64 的方式 存储在 imageBase64的属性里。
+            cal_results.update(app.config['results'].get_image_info())
+            return jsonify(cal_results)
+        else:
+            return jsonify({"error": "404 [check you url]"})
 
 
 # 故障信息
 @app.route('/hardware-problem')
 def hardware_problem():
-    return "TODO"
+    return jsonify(app.config['hardware'].get_error_info())
 
 
 if __name__ == '__main__':

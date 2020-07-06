@@ -58,17 +58,17 @@ class Hardware:
             }
         }
 
-        # # error
-        # self.error_info = {
-        #     'camera': '正常',   # 相机
-        #     'balance': '正常',  # 秤
-        #     'printer': '正常',  # 打印机
-        #     'light': '正常',    # 灯
-        #     'height': '正常',    # 抬升
-        #     'fan': '正常',      # 风扇
-        #     'plate': '正常',    # 托盘
-        #     'main': '正常'      # 主控
-        # }
+        # error
+        self.error_info = {
+            'camera': '正常',  # 相机
+            'balance': '正常',  # 秤
+            'printer': '正常',  # 打印机
+            'light': '正常',  # 灯
+            'height': '正常',  # 抬升
+            'fan': '正常',  # 风扇
+            'plate': '正常',  # 托盘
+            'main': '正常'  # 主控
+        }
 
         self.capture = Capture()
 
@@ -82,3 +82,6 @@ class Hardware:
     def get_init_status(self) -> dict:
         self.init_status['capture'] = '已连接' if self.capture.isOpened() else '未连接'
         return self.init_status.copy()
+
+    def get_error_info(self):
+        return self.error_info.copy()

@@ -51,3 +51,9 @@ def is_port(port: str, protocol: str = 'http') -> bool:
         return True if port.isdigit() and port in ('23',) else False
     else:
         return False
+
+
+def is_img(name: str) -> bool:
+    if name.lower().endswith(('.bmp', '.dib', '.png', '.jpg', '.jpeg', '.pbm', '.pgm', '.ppm', '.tif', '.tiff')):
+        return True
+    return False

@@ -15,7 +15,7 @@
 #       主要问题：
 class Results:
     def __init__(self):
-        self.ima_parameters = {
+        self.img_parameters = {
             '穗长': 'NONE',
             '一次支梗数': 'NONE',
             '总粒数': 'NONE',
@@ -68,7 +68,7 @@ class Results:
             '分蘖数': 'NONE',
             '侧面面积': 'NONE',
         }
-        self.ima_info = {
+        self.img_info = {
             'imageName': 'NONE',
             'image': 'NONE',
             # 'update': False
@@ -78,10 +78,10 @@ class Results:
         """
         :return: Image's 51 parameters
         """
-        return self.ima_parameters.copy()
+        return self.img_parameters.copy()
 
     def get_image_info(self):
         """
         :return: Image's information:name and the result ofimage
         """
-        return self.ima_info.copy()
+        return self.img_info.copy()

@@ -39,7 +39,7 @@ request.args # 存放URL中的数据 to_dict()
 request.json # 在请求头:Content-Type:application/json 自动序列化json
 request.data # 在请求头: Content-Type中无法被识别，请求体中数据存在data中 b""
 request.methond # 请求方式
-request.files # 文件储存　save(file.name)
+request.files # 文件储存　save(file.filename)
 ```
 
 ## Session
@@ -48,11 +48,13 @@ request.files # 文件储存　save(file.name)
 from flask import session
 app.secret_key = "54677"
 
+#存在浏览器的cookie中　- 由secret_key + session 加密后存放
+# 流程
 # ｛user:123｝ + secret_key - respose-cookie 拿到cookie 中存放
 # 请求带上cookie - flask收到cookie 中的session 通过secret_key　反序列化
 session["user"] = "123"
-存在浏览器的cookie中　- 由secret_key + session 加密后存放
 
+session.get("user")
 ```
 
 
@@ -63,7 +65,7 @@ session["user"] = "123"
 
 - 主要问题：装饰器函数名重复
 - 解决：
-  - `endpoint` 默认视图函数名字
+  - `endpoint` 默认值视图函数名字，可以通过endpoint修改
   - `@functools.wraps(装饰函数)`
 
 ## flask中的路由
@@ -134,6 +136,7 @@ app = Flask(__name__, template_folder = "temp", static_folder = "statics", stati
 1. `template_folder = "temp"` 默认模板路径`templates`
 2. `static_folder = "statics"`默认静态文件路径 `static`
 3. `static_url_path="/static` 默认静态文件路由地址 "/"+`static_folder`
+4. 蓝图的 `url_prefix`特殊配置 `url`前缀
 
 ## Flask对象配置
 
@@ -142,6 +145,7 @@ app = Flask(__name__, template_folder = "temp", static_folder = "statics", stati
 ```python
 app.config["SECRET_KEY"] = "123456"
 app.config["DEBUG"] = True
+app.config.from_obj(class)
 ```
 
 DEBUG模式和TESTING模式
@@ -151,13 +155,19 @@ DEBUG模式和TESTING模式
 - 作用:实现功能的插拔随意，把某一整块的功能可以封装到一个蓝图里。
 
   ```python
-  Blueprint # 当成一个不能被启动的app flask实例
+  # Blueprint 
+  # 当成一个不能被启动的app flask实例
   # 使用
   from flask import Blueprint
   s4app = Blueprint("s4app", __name__, template_folder="apptem", url_prefix="/blue")
   
+  # 注册蓝图 与app关联
   app.register_blueprint(view.s4app)
+  
+  # 蓝图实例化
   @s4app.route("/s4app")
+  def appfunc():
+      return
   ```
 
 - `url_prefix="/blue"` url前缀
@@ -224,9 +234,41 @@ def be():
 3. WTForms
 4. 数据库连接池
 
-## CBV
+## CBV(class-based-view)
+
+
 
 ```python
-
+from 
+class Login
 ```
+
+### werkzurg
+
+
+
+### 偏函数
+
+```python
+from functools import partial
+def ab(a,*args):
+    print(a,args)
+    return a
+par_ab = partial(ab,1)
+print(par_ab(2))
+```
+
+把后面参数传递到前面函数中，但是没有执行，然后返回一个函数。
+
+再次返回执行函数的时候
+
+### 线程安全
+
+消耗空间 节省时间
+
+```python
+from threading import 
+```
+
+## falsk上下文
 
