@@ -3,8 +3,8 @@
 
 """
 @version: Python3.7
-@author: Zhiyu YANG  Liu Zhe
-@e-mail: zhiyu_yang@sjtu.edu.cn  LiuZhe_54677@sjtu.edu.cn
+@author: Zhiyu YANG, Liu Zhe
+@e-mail: zhiyu_yang@sjtu.edu.cn, LiuZhe_54677@sjtu.edu.cn
 @file: hardware.py
 @time: 2020/5/5 14:49
 
@@ -33,7 +33,8 @@ class Hardware:
             'printer': '未连接',
             'light': False,
             'fan': False,
-            'plate': False,
+            # 'plate': False,
+            'plate': '关闭',
             'main': '运行中'
         }
 
@@ -45,7 +46,8 @@ class Hardware:
             'printer': '未连接',
             'light': False,
             'fan': False,
-            'plate': False,
+            # 'plate': False,
+            'plate': '关闭',
             'main': '运行中'
         }
 
@@ -85,3 +87,4 @@ class Hardware:
 
     def get_error_info(self):
         return self.error_info.copy()
+

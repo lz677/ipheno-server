@@ -57,11 +57,11 @@ def system(cmd):
                 app.config['hardware'].system_info["staticIP"]["ip"] = request.args.get("staticIp")
                 app.config['hardware'].system_info["staticIP"]["port"] = request.args.get("port")
             else:
-                return jsonify({"state": "default"})
+                # return jsonify({"state": "default"})
                 # Web测试功能时使用
-                # pass
+                pass
             # Web测试功能时使用
-            # return render_template("set-ip.html", system_ip_port=app.config['hardware'].system_info['staticIP'])
+            return render_template("set-ip.html", system_ip_port=app.config['hardware'].system_info['staticIP'])
 
     elif cmd == "restart":
         # 重启总控，接受到GET的请求之后，重启总控，返回总控的状态
@@ -111,16 +111,16 @@ def light(cmd):
     if cmd == "open":
         app.config['hardware'].all_status["light"] = True
         if app.config['hardware'].all_status["light"]:
-            # return 'ok'
-            return jsonify({'state': "ok"})
+            return 'ok'
+            # return jsonify({'state': "ok"})
         else:
             # return 'failed'
             return jsonify({'state': "failed"})
     elif cmd == "close":
         app.config['hardware'].all_status["light"] = False
         if not app.config['hardware'].all_status["light"]:
-            # return 'ok'
-            return jsonify({'state': "ok"})
+            return 'ok'
+            # return jsonify({'state': "ok"})
         else:
             # return 'failed'
             return jsonify({'state': "failed"})
@@ -312,4 +312,4 @@ def hardware_problem():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)

@@ -3,8 +3,8 @@
 
 """
 @version: Python3.7
-@author: Zhiyu YANG
-@e-mail: zhiyu_yang@sjtu.edu.cn
+@author: Zhiyu YANG, Liu Zhe
+@e-mail: zhiyu_yang@sjtu.edu.cn, LiuZhe_54677@sjtu.edu.cn
 @file: utility.py
 @time: 2020/5/5 17:12
 
@@ -42,7 +42,7 @@ def is_port(port: str, protocol: str = 'http') -> bool:
     """
     port = port.strip()
     if protocol.lower() == 'http':
-        return True if port.isdigit() and port in ('80', '8080', '3128', '8081', '9098') else False
+        return True if port.isdigit() and port in ('8080', '3128', '8081', '9098') else False
     elif protocol.lower() == 'ftp':
         return True if port.isdigit() and port in ('21',) else False
     elif protocol.lower() == 'socks':
@@ -54,6 +54,5 @@ def is_port(port: str, protocol: str = 'http') -> bool:
 
 
 def is_img(name: str) -> bool:
-    if name.lower().endswith(('.bmp', '.dib', '.png', '.jpg', '.jpeg', '.pbm', '.pgm', '.ppm', '.tif', '.tiff')):
-        return True
-    return False
+    # return name.lower().endswith(('.bmp', '.dib', '.png', '.jpg', '.jpeg', '.pbm', '.pgm', '.ppm', '.tif', '.tiff'))
+    return name.lower().endswith(('.bmp', '.png', '.jpg', '.jpeg', '.pbm'))

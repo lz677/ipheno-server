@@ -3,8 +3,8 @@
 
 """
 @version: Python3.7
-@author: Zhiyu YANG
-@e-mail: zhiyu_yang@sjtu.edu.cn
+@author: Zhiyu YANG, Liu Zhe
+@e-mail: zhiyu_yang@sjtu.edu.cn, LiuZhe_54677@sjtu.edu.cn
 @file: capture.py
 @time: 2020/5/5 14:40
 

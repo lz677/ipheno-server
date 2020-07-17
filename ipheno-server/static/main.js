@@ -228,7 +228,7 @@ class AppComponent {
             printer: '未连接',
             light: false,
             fan: false,
-            plate: false,
+            plate: '关闭',
             main: '未连接'
         };
         this.systemInfo = {
@@ -322,9 +322,13 @@ class AppComponent {
         console.log('onSwitchChanged', type);
         if (type === 'fan') {
             this.isOpenFanLoading = true;
-            this.http.get('/fan/' + (this.status.fan ? 'open' : 'close'), { responseType: 'text' }).subscribe((data) => {
-                console.log(data);
-                if (data === 'ok') {
+            // this.http.get('/fan/' + (this.status.fan ? 'open' : 'close'), { responseType: 'json' }).subscribe((data) => {
+            this.http.get('/fan/' + (this.status.fan ? 'open' : 'close')).subscribe((data) => {
+                console.log(data['status']);
+                if (data['state'] === 'ok') {
+                }
+                else if(data['state'] === 'failed'){
+                    this.message.create('error', `风扇未打开`);
                 }
                 else {
                     this.status.fan = !this.status.fan;
