@@ -84,6 +84,7 @@ if __name__ == '__main__':
     angle_test, last_angle, cir = ec.get_start_angle(), ec.get_start_angle(), 0
     t = 1
     try:
+        print("测试开始")
         while True:
             angle_test = ec.get_angle()
             if (last_angle - angle_test) / t > 180:

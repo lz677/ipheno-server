@@ -22,6 +22,7 @@ except RuntimeError:
 class Motor(object):
     def __init__(self, gpio_pins: typing.List[int], mode=GPIO.BOARD, frequency=800):
         self.mode = mode
+        # GPIO.setmode(GPIO.BOARD)
         self.pins = gpio_pins  # 引脚列表
         self.COM = gpio_pins[0]  # COM 3.3-5v 采用共阳极
         self.DIR = gpio_pins[1]  # DIR direction 方向信号 0V Vcom
@@ -29,7 +30,8 @@ class Motor(object):
         self.EN = gpio_pins[3]  # 脱机信号 Vcom使能电机 0V步进电机脱机状态
         self.able_status = False  # 默认不使能
         self.direction_is_cw = True  # True 电机方向为顺时针 False为逆时针
-        self.pwm = GPIO.PWM(self.STP, frequency)  # 初始化PWM实例 频率为100-20kHz 1600 -> 1r/s
+        self.frequency = frequency
+        self.pwm = None  # 初始化PWM实例 频率为100-20kHz 1600 -> 1r/s
         self.initialization()
 
     # 初始化驱动器的GPIO
@@ -38,9 +40,11 @@ class Motor(object):
         初始化驱动器的GPIO
         :return: None
         """
+        GPIO.setmode(self.mode)
         GPIO.setup(self.pins, GPIO.OUT)
         # COM-True DIR-True STP-False EN-False
-        GPIO(self.pins, (True, True, False, False))
+        GPIO.output(self.pins, (True, True, False, False))
+        self.pwm = GPIO.PWM(self.STP, self.frequency)  # 初始化PWM实例 频率为100-20kHz 1600 -> 1r/s
         # 启动pwm
         self.pwm.start(0)
         self.direction_is_cw = True
@@ -56,6 +60,7 @@ class Motor(object):
         """
         if mode in (GPIO.BOARD, GPIO.BCM):
             self.mode = mode
+            GPIO.setmode(mode)
             return True
         return False
 
@@ -67,7 +72,9 @@ class Motor(object):
         :return: 是否设置成功
         """
         if 100 < frequency < 20000:
+            self.pwm.stop()
             self.pwm = GPIO.PWM(self.STP, frequency)
+            self.pwm.start(0)
             return True
         return False
 
@@ -124,13 +131,15 @@ class Motor(object):
 
 
 class TravelSwitch(object):
-    def __init__(self, pins):
+    def __init__(self, pins, mode=GPIO.BOARD):
+        self.mode = mode
         self.pins = pins
         self.pin_NC = pins[0]
         self.pins_NO = pins[1]
         self.initialization()
 
     def initialization(self):
+        GPIO.setmode(GPIO.BOARD)
         GPIO.setup(self.pins, GPIO.IN)
 
     def get_switch_status(self) -> bool:
@@ -187,15 +196,21 @@ class MotorAction(object):
         return False
 
     # 关闭或者开启
-    def action(self, is_goto_begin: bool, frequency, duty):
+    def action(self, is_goto_begin: bool, frequency, duty) -> bool:
         if is_goto_begin:
             print("正在回到初始位置...")
-            self.goto_position(True, frequency, duty)
-            print("已经回到初始位置")
+            res = self.goto_position(True, frequency, duty)
+            if res:
+                print("已经回到初始位置")
+                return True
+            return False
         else:
-            print("正在回到终止位置...")
-            self.goto_position(False, frequency, duty)
-            print("已经回到终止位置")
+            print("正在抵达终止位置...")
+            res = self.goto_position(False, frequency, duty)
+            if res:
+                print("已经抵达终止位置")
+                return True
+            return False
 
 
 # 功能测试代码 用一个电机
@@ -206,12 +221,12 @@ def test_step1():
     lifting = Motor([31, 33, 35, 37], frequency=800)
     # 修改模式
     print("修改模式测试...")
-    lifting.set_mode(GPIO.BCM)
-    if lifting.which_mode() != GPIO.BCM:
-        print("set_mode或which_mode有问题")
-        exit(-100)
+    # lifting.set_mode(GPIO.BCM)
+    # if lifting.which_mode() != GPIO.BCM:
+    #     print("set_mode或which_mode有问题")
+    #     exit(-100)
     lifting.set_mode(GPIO.BOARD)
-    if lifting.which_mode() != GPIO.BCM:
+    if lifting.which_mode() != GPIO.BOARD:
         print("set_mode或which_mode有问题")
         exit(-100)
     # 使能测试:
@@ -224,36 +239,41 @@ def test_step1():
     lifting.set_direction(False)
     time.sleep(10)
     print("速度变快：10s")
-    lifting.set_pwm_frequency(1600)
+    if lifting.set_pwm_frequency(1600):
+        lifting.get_pwm().ChangeDutyCycle(10)
     time.sleep(10)
     print("停转")
     lifting.set_able_status(False)
     print("此时应该没力 30s")
-    time.sleep(30)
+    time.sleep(10)
+    lifting.clean_up()
+    print("测试结束")
 
 
 # 逻辑测试代码 用一个开关电源测试
 def test_step2():
-    drawer = MotorAction('托盘', [32, 36, 38, 40], [7, 11, 13, 15])
-    lifting = MotorAction('抬升', [31, 33, 35, 37], [12, 16, 18, 22])
-
+    drawer = MotorAction('托盘', [31, 33, 35, 37], [12, 16, 18, 22])
+    lifting = MotorAction('抬升', [32, 36, 38, 40], [13, 15, 7, 11])
+    # drawer = MotorAction('托盘', [32, 36, 38, 40], [7, 11, 7, 11])
+    # lifting = MotorAction('抬升', [31, 33, 35, 37], [7, 11, 7, 11])
     print("初始化抽屉 等待3s")
     time.sleep(3)
-    drawer.initialization(4000, 10)
+    drawer.initialization(4000, 5)
 
-    print('*' * 50)
+    print()
     print("初始化抬升 等待3s")
     time.sleep(3)
     lifting.initialization(800, 10)
+    print("初试化结束")
 
     print('*' * 50)
     print("抽屉测试开始 等待3s")
     time.sleep(3)
-    drawer.action(False, 4000, 10)
+    drawer.action(False, 4000, 5)
 
-    print('*' * 50)
+    print()
     time.sleep(3)
-    drawer.action(True, 4000, 10)
+    drawer.action(True, 4000, 5)
     print("抽屉测试结束")
 
     print('*' * 50)
@@ -261,9 +281,9 @@ def test_step2():
     time.sleep(3)
     lifting.action(False, 800, 10)
 
-    print('*' * 50)
+    print()
     time.sleep(3)
-    lifting.action(False, 800, 10)
+    lifting.action(True, 800, 10)
     print("抬升测试结束")
 
     print('*' * 50)
@@ -274,6 +294,6 @@ def test_step2():
 
 if __name__ == '__main__':
     try:
-        test_step1()
+        test_step2()
     except KeyboardInterrupt:
         print("程序中断")

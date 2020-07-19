@@ -32,9 +32,9 @@ class Hardware:
             'balance': '0',
             'printer': '未连接',
             'light': False,
-            'fan': False,
-            # 'plate': False,
-            'plate': '关闭',
+            # 'fan': False,
+            'plate': False,
+            'lifting': False,
             'main': '运行中'
         }
 
@@ -46,8 +46,9 @@ class Hardware:
             'printer': '未连接',
             'light': False,
             'fan': False,
-            # 'plate': False,
-            'plate': '关闭',
+            'plate': False,
+            # 'plate': '关闭',
+            'lifting': False,
             'main': '运行中'
         }
 
@@ -87,4 +88,3 @@ class Hardware:
 
     def get_error_info(self):
         return self.error_info.copy()
-
