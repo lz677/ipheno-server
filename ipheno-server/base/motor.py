@@ -170,7 +170,7 @@ class MotorAction(object):
                 break
             elif self.end_switch.get_switch_status() and not is_goto_begin:
                 break
-            elif time.time() - begin_time > 60:
+            elif time.time() - begin_time > 10:
                 break
         self.motor.set_able_status(False)
         self.motor.pwm.ChangeDutyCycle(0)
