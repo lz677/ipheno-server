@@ -168,7 +168,7 @@ def plate(cmd):
     print("plate:", cmd)
     if cmd == "open":
         print(app.config['hardware'].all_status['plate'])
-        if drawer.action(False, 8000, 2):
+        if drawer.action(False, 8000, 5):
             app.config['hardware'].all_status['plate'] = False
         if not app.config['hardware'].all_status['plate']:
             # return 'ok'
@@ -177,13 +177,10 @@ def plate(cmd):
             # return 'failed'
             return jsonify({'state': "failed"})
     elif cmd == "close":
-        # print(app.config['hardware'].all_status['plate'])
-        drawer.action(True, 8000, 2)
-        # print(flag)
-        # TODO:逻辑问题
-        # if flag:
-        drawer.motor.set_able_status(True)
-        app.config['hardware'].all_status['plate'] = True
+        if drawer.action(True, 8000, 5):
+            # TODO:逻辑问题 托盘不自锁 可能会弹开
+            drawer.motor.set_able_status(True)
+            app.config['hardware'].all_status['plate'] = True
         if app.config['hardware'].all_status['plate']:
             # return 'ok'
             return jsonify({'state': "ok"})
@@ -204,8 +201,8 @@ def lift(cmd):
     """
     print("lifting:", cmd)
     if cmd == "up":
-        if app.config['hardware'].all_status['lifting'] == False:
-            if lifting.action(True, 1000, 20):
+        if not app.config['hardware'].all_status['lifting']:
+            if lifting.action(True, 1600, 20):
                 app.config['hardware'].all_status['lifting'] = True
         if app.config['hardware'].all_status['lifting']:
             # return 'ok'
@@ -214,8 +211,8 @@ def lift(cmd):
             # return 'failed'
             return jsonify({'state': "failed"})
     elif cmd == "down":
-        if app.config['hardware'].all_status['lifting'] == True:
-            if lifting.action(False, 1000, 10):
+        if app.config['hardware'].all_status['lifting']:
+            if lifting.action(False, 1600, 10):
                 app.config['hardware'].all_status['lifting'] = False
         if not app.config['hardware'].all_status['lifting']:
             # return 'ok'

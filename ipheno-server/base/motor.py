@@ -164,10 +164,13 @@ class MotorAction(object):
         self.motor.set_direction(is_goto_begin)
         self.motor.set_pwm_frequency(frequency)
         self.motor.pwm.ChangeDutyCycle(duty)
+        begin_time = time.time()
         while True:
             if self.begin_switch.get_switch_status() and is_goto_begin:
                 break
             elif self.end_switch.get_switch_status() and not is_goto_begin:
+                break
+            elif time.time() - begin_time > 60:
                 break
         self.motor.set_able_status(False)
         self.motor.pwm.ChangeDutyCycle(0)
