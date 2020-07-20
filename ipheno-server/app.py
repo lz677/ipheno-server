@@ -6,15 +6,15 @@ from flask.json import jsonify
 from base import Hardware
 from base import Results
 from base import utility
-from base import Motor, TravelSwitch, MotorAction
+# from base import Motor, TravelSwitch, MotorAction
 
 app = Flask(__name__)
 
 app.config['hardware'] = Hardware()
 app.config['results'] = Results()
 
-drawer = MotorAction('托盘', [31, 33, 35, 37], [12, 16, 18, 22])
-lifting = MotorAction('抬升', [32, 36, 38, 40], [13, 15, 7, 11])
+# drawer = MotorAction('托盘', [31, 33, 35, 37], [12, 16, 18, 22])
+# lifting = MotorAction('抬升', [32, 36, 38, 40], [13, 15, 7, 11])
 
 
 # 验证文件大小，通过设置Flask内置的配置变量MAX_CONTENT_LENGTH，可以显示请求报文的最大长度，单位是字节
@@ -168,8 +168,8 @@ def plate(cmd):
     print("plate:", cmd)
     if cmd == "open":
         print(app.config['hardware'].all_status['plate'])
-        if drawer.action(False, 8000, 5):
-            app.config['hardware'].all_status['plate'] = False
+        # if drawer.action(False, 8000, 5):
+        app.config['hardware'].all_status['plate'] = False
         if not app.config['hardware'].all_status['plate']:
             # return 'ok'
             return jsonify({'state': "ok"})
@@ -177,10 +177,10 @@ def plate(cmd):
             # return 'failed'
             return jsonify({'state': "failed"})
     elif cmd == "close":
-        if drawer.action(True, 8000, 5):
-            # TODO:逻辑问题 托盘不自锁 可能会弹开
-            drawer.motor.set_able_status(True)
-            app.config['hardware'].all_status['plate'] = True
+        # if drawer.action(True, 8000, 5):
+        #     # TODO:逻辑问题 托盘不自锁 可能会弹开
+        #     drawer.motor.set_able_status(True)
+        app.config['hardware'].all_status['plate'] = True
         if app.config['hardware'].all_status['plate']:
             # return 'ok'
             return jsonify({'state': "ok"})
@@ -202,8 +202,8 @@ def lift(cmd):
     print("lifting:", cmd)
     if cmd == "up":
         if not app.config['hardware'].all_status['lifting']:
-            if lifting.action(True, 1600, 20):
-                app.config['hardware'].all_status['lifting'] = True
+            # if lifting.action(True, 1600, 20):
+            app.config['hardware'].all_status['lifting'] = True
         if app.config['hardware'].all_status['lifting']:
             # return 'ok'
             return jsonify({'state': "ok"})
@@ -212,8 +212,8 @@ def lift(cmd):
             return jsonify({'state': "failed"})
     elif cmd == "down":
         if app.config['hardware'].all_status['lifting']:
-            if lifting.action(False, 1600, 10):
-                app.config['hardware'].all_status['lifting'] = False
+            # if lifting.action(False, 1600, 10):
+            app.config['hardware'].all_status['lifting'] = False
         if not app.config['hardware'].all_status['lifting']:
             # return 'ok'
             return jsonify({'state': "ok"})

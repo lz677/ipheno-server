@@ -31,6 +31,8 @@ class Motor(object):
         self.able_status = False  # 默认不使能
         self.direction_is_cw = True  # True 电机方向为顺时针 False为逆时针
         self.frequency = frequency
+        self.duty = 0
+        self.duty_max = 100
         self.pwm = None  # 初始化PWM实例 频率为100-20kHz 1600 -> 1r/s
         self.initialization()
 
@@ -73,10 +75,23 @@ class Motor(object):
         """
         if 100 < frequency < 20000:
             self.pwm.stop()
+            self.frequency = frequency
             self.pwm = GPIO.PWM(self.STP, frequency)
-            self.pwm.start(0)
+            self.pwm.start(self.duty)
             return True
         return False
+
+    # 修改 占空比
+    def set_duty(self, duty):
+        if 0 <= duty <= self.duty_max:
+            self.duty = duty
+            self.pwm.ChangeDutyCycle(self.duty)
+        elif duty > self.duty_max:
+            self.duty = self.duty_max
+            self.pwm.ChangeDutyCycle(self.duty_max)
+        else:
+            self.duty = 0
+            self.pwm.ChangeDutyCycle(self.duty)
 
     # 使能电机
     def set_able_status(self, is_enable: bool = True):
@@ -163,7 +178,7 @@ class MotorAction(object):
         self.motor.set_able_status(True)
         self.motor.set_direction(is_goto_begin)
         self.motor.set_pwm_frequency(frequency)
-        self.motor.pwm.ChangeDutyCycle(duty)
+        self.motor.set_duty(duty)
         begin_time = time.time()
         while True:
             if self.begin_switch.get_switch_status() and is_goto_begin:

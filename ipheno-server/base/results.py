@@ -82,6 +82,6 @@ class Results:
 
     def get_image_info(self):
         """
-        :return: Image's information:name and the result ofimage
+        :return: Image's information:name and the result of image
         """
         return self.img_info.copy()
