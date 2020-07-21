@@ -65,14 +65,15 @@ class Hardware:
 
         # error
         self.error_info = {
-            'camera': '正常',  # 相机
-            'balance': '正常',  # 秤
-            'printer': '正常',  # 打印机
-            'light': '正常',  # 灯
-            'height': '正常',  # 抬升
-            'fan': '正常',  # 风扇
-            'plate': '正常',  # 托盘
-            'main': '正常'  # 主控
+            'camera': 'Normal',  # 相机
+            'balance': 'Normal',  # 秤
+            'printer': 'Normal',  # 打印机
+            'light': 'Normal',  # 灯
+            'light_plate': 'Normal',
+            'lifting': 'Normal',  # 抬升
+            'fan': 'Normal',  # 风扇
+            'plate': 'Normal',  # 托盘
+            'main': 'Normal'  # 主控
         }
 
         self.capture = Capture()

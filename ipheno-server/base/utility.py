@@ -42,7 +42,7 @@ def is_port(port: str, protocol: str = 'http') -> bool:
     """
     port = port.strip()
     if protocol.lower() == 'http':
-        return True if port.isdigit() and port in ('8080', '3128', '8081', '9098') else False
+        return True if port.isdigit() and port in ('8080', '3128', '8081', '9098', '5000', '8000') else False
     elif protocol.lower() == 'ftp':
         return True if port.isdigit() and port in ('21',) else False
     elif protocol.lower() == 'socks':

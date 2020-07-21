@@ -18,7 +18,6 @@ from base import Hardware
 from base import Results
 from base import utility
 
-
 app_web = Flask(__name__)
 hardware_info = Hardware()
 results = Results()
@@ -27,6 +26,12 @@ hardware_det = hardware_detect.HardwareDetect()
 
 # drawer = MotorAction('托盘', [31, 33, 35, 37], [12, 16, 18, 22])
 # lifting = MotorAction('抬升', [32, 36, 38, 40], [13, 15, 7, 11])
+
+
+@app_web.errorhandler(404)
+def error404(args):
+    return args
+
 
 # web端主页面
 @app_web.route('/')
@@ -45,14 +50,14 @@ def status_all():
 @app_web.route('/system/<string:cmd>')
 def system(cmd):
     """
-    :param cmd: 执行的操作[查看总控信息，设置静态IP，重启总控]
+    :param cmd: 执行的操作[查看总控信息， 设置静态IP， 重启总控]
     :return:
     """
     if cmd == "info":
         return jsonify(hardware_info.get_system_info())
-    elif cmd == "set-staticIP":
+    elif cmd == "set-ip":
         if request.method == "GET":
-            ip = request.args.get("staticIp")
+            ip = request.args.get("ip")
             port = request.args.get("port")
             # ip和port 都合法才可以修改
             if ip is not None or port is not None:
@@ -80,29 +85,27 @@ def system(cmd):
 
 
 # 相机
-# 打开
-@app_web.route('/open-camera')
-def open_camera():
-    print('打开相机')
-    if not hardware_info.capture.isOpened():
-        hardware_info.capture.open()
-    hardware_info.capture.start_stream()
-    return (jsonify({'state': "ok"}) if hardware_info.capture.isOpened()
-            else jsonify({'state': "failed"}))  # ok, failed
-
-
-# 关闭
-@app_web.route('/close-camera')
-def close_camera():
-    print("关闭相机")
-    hardware_info.capture.stop_stream()
-    # hardware_info.capture.release()  # cv2的release()有bug
-    # 直接返回ok即可
-    return jsonify({'state': "ok"})
+@app_web.route('/camera/<string:cmd>')
+def camera(cmd):
+    if cmd == 'open':
+        print('打开相机')
+        if not hardware_info.capture.isOpened():
+            hardware_info.capture.open()
+        hardware_info.capture.start_stream()
+        return (jsonify({'state': "ok"}) if hardware_info.capture.isOpened() else jsonify(
+            {'state': "failed"}))  # ok, failed
+    elif cmd == 'close':
+        print("关闭相机")
+        hardware_info.capture.stop_stream()
+        # hardware_info.capture.release()  # cv2的release()有bug
+        # 直接返回ok即可
+        return jsonify({'state': "ok"})
+    else:
+        return jsonify({"error": "404 [check you url]"})
 
 
 # 实时图像 b''
-@app_web.route('/realtime-img')
+@app_web.route('/realtime_img')
 def realtime_img():
     return Response(hardware_info.capture.gen_stream(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
@@ -175,7 +178,7 @@ def weight(cmd):
         hardware_info.all_status['balance'] = 0.00
         # TODO：测量结果为0.00 用测量值替换 hardware_info.all_status['balance']
         return jsonify({"state": "ok"}) if hardware_info.all_status['balance'] == 0.00 else jsonify({"state": "failed"})
-    elif cmd == "weight":
+    elif cmd == "result":
         print("正在称重... 2s")
         time.sleep(2)
         hardware_info.all_status['balance'] = 6.77
@@ -269,61 +272,54 @@ def fan(cmd):
         return jsonify({"error": "404 [check you url]"})
 
 
-# 暂时不测试
-@app_web.route('/results', methods=["GET", "POST"])
-def results():
-    if request.method == "GET":
-        return render_template("staticimage.html")
+# 打印机
+@app_web.route('/printer/<string:cmd>', methods=["GET", "POST"])
+def printer(cmd):
+    """
+    TODO: 待完善
+    print the  results
+    :return:
+    """
+    if cmd == "connect":
+        print("打印机连接中...... 2s")
+        time.sleep(2)
+        return jsonify({'state': "connected"})
+    if cmd == 'print':
+        print("打印中...... 2s")
+        time.sleep(2)
+        return jsonify({'state': "ok"})
 
-    if request.method == "POST":
-        if request.args.get("remote") == '1':
-            # TODO base64还是file格式有待确定
-            image = request.files.get("image")
-            # 两种方式 1. 远程的图片 接收图片和名称  2. 总控传递过去的图片 只接受名称（核对方式）
-            if utility.is_img(image.filename):
-                # path = ''
-                image.save('./static/' + image.filename)
-                # TODO 调用算法 算法直接读取存储图片
-                print("正在调用算法计算... 5s")
-                time.sleep(5)
-                # 返回结果
-                results.img_info["imageName"] = image.filename
-                results.img_info["image"] = './static/' + image.filename
-                cal_results = results.get_image_parameters()
-                # 算法返回的图片 以 base64 的方式 存储在 imageBase64的属性里。
-                cal_results.update(results.get_image_info())
-                return jsonify(cal_results)
-            else:
-                return jsonify({'state': 'check your file'})
-        elif request.args.get("imageName") is not None:
-            # TODO 调用算法 传递给算法参数
-            print("正在调用算法计算... 5s")
-            time.sleep(5)
-            # 返回结果
-            results.img_info["imageName"] = request.args.get("imageName")
-            cal_results = results.get_image_parameters()
-            # 算法返回的图片 以 base64 的方式 存储在 imageBase64的属性里。
-            cal_results.update(results.get_image_info())
-            return jsonify(cal_results)
-        else:
-            print("检查你的url")
-            return jsonify({"error": "404 [check you url]"})
+
+# 参数
+@app_web.route('/results/<string:cmd>', methods=["GET", "POST"])
+def results(cmd):
+    if cmd == 'parameters':
+        # TODO 调用算法 算法直接读取存储图片
+        print("正在调用算法计算... 2s")
+        time.sleep(2)
+        # 返回结果
+        cal_results = results.get_image_parameters()
+        # 算法返回的图片 以 base64 的方式 存储在 imageBase64的属性里。
+        cal_results.update(results.get_image_info())
+        return jsonify(cal_results)
+    else:
+        print("检查你的url")
+        return jsonify({"error": "404 [check you url]"})
 
 
 # 故障信息
-@app_web.route('/hardware-problem')
-def hardware_problem():
+@app_web.route('/hardware_errors')
+def hardware_errors():
     print("正在返回故障信息.... 2s")
     time.sleep(2)
     return jsonify(hardware_info.get_error_info())
 
 
-# import app
-
-
-# 开机硬件自检
-hardware_det.like_detect()
-print("lz")
 # 开机算法版本自检
+print("版本自检")
+# 开机硬件自检
+print("开机自检")
+hardware_det.like_detect()
+
 if __name__ == '__main__':
     app_web.run(debug=True, host='0.0.0.0', port=5000)
