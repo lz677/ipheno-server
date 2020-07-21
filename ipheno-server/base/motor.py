@@ -13,6 +13,8 @@ import typing
 
 try:
     import RPi.GPIO as GPIO
+except ModuleNotFoundError:
+    print("motor depend on RPi.GPIO, so run it on RPi please")
 except RuntimeError:
     print("Error importing RPi.GPIO!  This is probably because you need superuser privileges."
           + "You can achieve this by using 'sudo' to run your script")
@@ -76,6 +78,7 @@ class Motor(object):
         if 100 < frequency < 20000:
             self.pwm.stop()
             self.frequency = frequency
+            print("当前频率为： ", frequency)
             self.pwm = GPIO.PWM(self.STP, frequency)
             self.pwm.start(self.duty)
             return True
@@ -167,17 +170,17 @@ class TravelSwitch(object):
 
 
 class MotorAction(object):
-    def __init__(self, motor_name, motor_pins, switch_pins):
+    def __init__(self, motor_name, motor_pins, switch_pins, frequency):
         self.name = motor_name
-        self.motor = Motor(motor_pins)
+        self.motor = Motor(motor_pins, frequency=frequency)
         self.begin_switch = TravelSwitch(switch_pins[0:2])
         self.end_switch = TravelSwitch(switch_pins[-2:])
 
     # 初始位置或终止位置
-    def goto_position(self, is_goto_begin: bool, frequency, duty) -> bool:
+    def goto_position(self, is_goto_begin: bool, duty) -> bool:
         self.motor.set_able_status(True)
         self.motor.set_direction(is_goto_begin)
-        self.motor.set_pwm_frequency(frequency)
+        # self.motor.set_pwm_frequency(frequency)
         self.motor.set_duty(duty)
         begin_time = time.time()
         while True:
@@ -185,7 +188,7 @@ class MotorAction(object):
                 break
             elif self.end_switch.get_switch_status() and not is_goto_begin:
                 break
-            elif time.time() - begin_time > 10:
+            elif time.time() - begin_time > 20:
                 break
         self.motor.set_able_status(False)
         self.motor.pwm.ChangeDutyCycle(0)
@@ -214,17 +217,17 @@ class MotorAction(object):
         return False
 
     # 关闭或者开启
-    def action(self, is_goto_begin: bool, frequency, duty) -> bool:
+    def action(self, is_goto_begin: bool, duty) -> bool:
         if is_goto_begin:
             print("正在回到初始位置...")
-            res = self.goto_position(True, frequency, duty)
+            res = self.goto_position(True, duty)
             if res:
                 print("已经回到初始位置")
                 return True
             return False
         else:
             print("正在抵达终止位置...")
-            res = self.goto_position(False, frequency, duty)
+            res = self.goto_position(False, duty)
             if res:
                 print("已经抵达终止位置")
                 return True
@@ -270,8 +273,8 @@ def test_step1():
 
 # 逻辑测试代码 用一个开关电源测试
 def test_step2():
-    drawer = MotorAction('托盘', [31, 33, 35, 37], [12, 16, 18, 22])
-    lifting = MotorAction('抬升', [32, 36, 38, 40], [13, 15, 7, 11])
+    drawer = MotorAction('托盘', [31, 33, 35, 37], [12, 16, 18, 22], frequency=4000)
+    lifting = MotorAction('抬升', [32, 36, 38, 40], [13, 15, 7, 11], frequency=800)
     # drawer = MotorAction('托盘', [32, 36, 38, 40], [7, 11, 7, 11])
     # lifting = MotorAction('抬升', [31, 33, 35, 37], [7, 11, 7, 11])
     print("初始化抽屉 等待3s")
@@ -287,21 +290,21 @@ def test_step2():
     print('*' * 50)
     print("抽屉测试开始 等待3s")
     time.sleep(3)
-    drawer.action(False, 4000, 5)
+    drawer.action(False, 5)
 
     print()
     time.sleep(3)
-    drawer.action(True, 4000, 5)
+    drawer.action(True, 5)
     print("抽屉测试结束")
 
     print('*' * 50)
     print("抬升测试开始 等待3s")
     time.sleep(3)
-    lifting.action(False, 800, 10)
+    lifting.action(False, 10)
 
     print()
     time.sleep(3)
-    lifting.action(True, 800, 10)
+    lifting.action(True, 10)
     print("抬升测试结束")
 
     print('*' * 50)

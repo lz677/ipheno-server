@@ -14,12 +14,12 @@ __VERSION__ = '0.0.1'
 
 from .capture import CaptureWebCam as Capture
 from .hardware import Hardware
-from .motor import Motor, TravelSwitch, MotorAction
 from .results import Results
+from .utility import load_data, save_data
+from .motor import Motor, TravelSwitch, MotorAction
+from .weight_sensor import WeightSensor
 from .step_motor_encoder import Encoder
 from .uart import Uart
-from .utility import load_data, save_data
-from .weight_sensor import WeightSensor
 
 __all__ = ['Capture', 'Hardware', '__VERSION__', 'load_data', 'save_data', 'Motor', 'TravelSwitch',
            'MotorAction', 'Results', 'Encoder', 'Uart', 'weight_sensor']

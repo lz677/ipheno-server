@@ -10,36 +10,37 @@
 """
 
 import time
-
+import hardware_detect
 from flask import Flask, render_template, Response, request, send_file, redirect
 from flask.json import jsonify
 from base import Hardware
 from base import Results
 from base import utility
 
-app = Flask(__name__)
+app_web = Flask(__name__)
 hardware_info = Hardware()
 results = Results()
+hardware_det = hardware_detect.HardwareDetect()
 
 
 # drawer = MotorAction('托盘', [31, 33, 35, 37], [12, 16, 18, 22])
 # lifting = MotorAction('抬升', [32, 36, 38, 40], [13, 15, 7, 11])
 
 # web端主页面
-@app.route('/')
+@app_web.route('/')
 def main_page():
     return render_template('index.html')
 
 
 # 硬件状态
-@app.route('/status-all')
+@app_web.route('/status-all')
 def status_all():
     # print('status_all')
     return jsonify(hardware_info.get_all_status())
 
 
 # 总控状态
-@app.route('/system/<string:cmd>')
+@app_web.route('/system/<string:cmd>')
 def system(cmd):
     """
     :param cmd: 执行的操作[查看总控信息，设置静态IP，重启总控]
@@ -77,7 +78,7 @@ def system(cmd):
 
 # 相机
 # 打开
-@app.route('/open-camera')
+@app_web.route('/open-camera')
 def open_camera():
     print('打开相机')
     if not hardware_info.capture.isOpened():
@@ -88,7 +89,7 @@ def open_camera():
 
 
 # 关闭
-@app.route('/close-camera')
+@app_web.route('/close-camera')
 def close_camera():
     print("关闭相机")
     hardware_info.capture.stop_stream()
@@ -98,13 +99,13 @@ def close_camera():
 
 
 # 实时图像 b''
-@app.route('/realtime-img')
+@app_web.route('/realtime-img')
 def realtime_img():
     return Response(hardware_info.capture.gen_stream(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 # 托盘
-@app.route('/plate/<string:cmd>')
+@app_web.route('/plate/<string:cmd>')
 def plate(cmd):
     """
     open or close the plate
@@ -135,7 +136,7 @@ def plate(cmd):
 
 
 # 抬升
-@app.route('/lift/<string:cmd>')
+@app_web.route('/lift/<string:cmd>')
 def lift(cmd):
     """
     lift up or down
@@ -163,7 +164,7 @@ def lift(cmd):
 
 
 # 称重
-@app.route('/weight/<string:cmd>')
+@app_web.route('/weight/<string:cmd>')
 def weight(cmd):
     if cmd == "zero":
         print("正在清零（去皮）...2s")
@@ -182,7 +183,7 @@ def weight(cmd):
 
 
 # 照明
-@app.route('/light/<string:cmd>')
+@app_web.route('/light/<string:cmd>')
 def light_handle(cmd):
     """
     open or close the light
@@ -210,7 +211,7 @@ def light_handle(cmd):
 
 
 # 发光板
-@app.route('/light_plate/<string:cmd>')
+@app_web.route('/light_plate/<string:cmd>')
 def light_plate_handle(cmd):
     """
     open or close the light
@@ -238,7 +239,7 @@ def light_plate_handle(cmd):
 
 
 # 风扇
-@app.route('/fan/<string:cmd>')
+@app_web.route('/fan/<string:cmd>')
 def fan(cmd):
     """
     open or close the fan
@@ -266,7 +267,7 @@ def fan(cmd):
 
 
 # 暂时不测试
-@app.route('/results', methods=["GET", "POST"])
+@app_web.route('/results', methods=["GET", "POST"])
 def results():
     if request.method == "GET":
         return render_template("staticimage.html")
@@ -307,8 +308,20 @@ def results():
 
 
 # 故障信息
-@app.route('/hardware-problem')
+@app_web.route('/hardware-problem')
 def hardware_problem():
     print("正在返回故障信息.... 2s")
     time.sleep(2)
     return jsonify(hardware_info.get_error_info())
+
+
+# import app
+
+if __name__ == '__main__':
+    # 开机硬件自检
+    hardware_det.like_detect()
+
+    # 开机算法版本自检
+
+    #
+    app_web.run(debug=True, host='0.0.0.0', port=5000)

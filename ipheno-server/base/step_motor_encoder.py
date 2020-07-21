@@ -12,6 +12,8 @@ import time
 
 try:
     from smbus2 import SMBus
+except ModuleNotFoundError:
+    print("please run it on RPi")
 except RuntimeError:
     print("pleas install sumbus")
 
