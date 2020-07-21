@@ -16,10 +16,13 @@ from .capture import CaptureWebCam as Capture
 from .hardware import Hardware
 from .results import Results
 from .utility import load_data, save_data
-from .motor import Motor, TravelSwitch, MotorAction
-from .weight_sensor import WeightSensor
-from .step_motor_encoder import Encoder
-from .uart import Uart
 
-__all__ = ['Capture', 'Hardware', '__VERSION__', 'load_data', 'save_data', 'Motor', 'TravelSwitch',
-           'MotorAction', 'Results', 'Encoder', 'Uart', 'weight_sensor']
+TEST_ON_RPI = False
+if TEST_ON_RPI:
+    from .motor import Motor, TravelSwitch, MotorAction
+    from .weight_sensor import WeightSensor
+    from .step_motor_encoder import Encoder
+    from .uart import Uart
+
+# __all__ = ['Capture', 'Hardware', '__VERSION__', 'load_data', 'save_data', 'Motor', 'TravelSwitch',
+#            'MotorAction', 'Results', 'Encoder', 'Uart', 'weight_sensor']

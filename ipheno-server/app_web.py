@@ -13,9 +13,11 @@ import time
 import hardware_detect
 from flask import Flask, render_template, Response, request, send_file, redirect
 from flask.json import jsonify
+
 from base import Hardware
 from base import Results
 from base import utility
+
 
 app_web = Flask(__name__)
 hardware_info = Hardware()
@@ -71,8 +73,9 @@ def system(cmd):
     elif cmd == "restart":
         # if hardware_info.all_status['main'] == "运行中":
         # TODO：树莓派重新启动
-        print("系统正在重启，10s后重启完毕")
-        time.sleep(10)
+        print("系统正在重启，2s后重启完毕")
+        time.sleep(2)
+        return jsonify({"state": "ok"})
         # sudo shutdown -r now    sudo reboot
 
 
@@ -317,11 +320,10 @@ def hardware_problem():
 
 # import app
 
+
+# 开机硬件自检
+hardware_det.like_detect()
+print("lz")
+# 开机算法版本自检
 if __name__ == '__main__':
-    # 开机硬件自检
-    hardware_det.like_detect()
-
-    # 开机算法版本自检
-
-    #
     app_web.run(debug=True, host='0.0.0.0', port=5000)
