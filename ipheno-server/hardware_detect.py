@@ -43,6 +43,5 @@ class HardwareDetect(object):
         pass
 
     # 假检测模块
-    def like_detect(self):
-        print("自检测中，等待2s....")
-        time.sleep(2)
+    def like_detect(self, n):
+        print("自检测中，等待%d s...." % n)

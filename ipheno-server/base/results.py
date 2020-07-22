@@ -16,6 +16,7 @@
 class Results:
     def __init__(self):
         self.img_parameters = {
+            '品种号': 'NONE',
             '穗长': 'NONE',
             '一次支梗数': 'NONE',
             '总粒数': 'NONE',

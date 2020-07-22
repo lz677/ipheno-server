@@ -13,14 +13,19 @@ import time
 import hardware_detect
 from flask import Flask, render_template, Response, request, send_file, redirect
 from flask.json import jsonify
+from blinker import Namespace
+
+my_signals = Namespace()
+easy_mode_signal = my_signals.signal('easy_mode_signal')
 
 from base import Hardware
 from base import Results
 from base import utility
+from threading import Lock
 
 app_web = Flask(__name__)
 hardware_info = Hardware()
-results = Results()
+results_info = Results()
 hardware_det = hardware_detect.HardwareDetect()
 
 
@@ -40,10 +45,15 @@ def main_page():
 
 
 # 硬件状态
-@app_web.route('/status-all')
-def status_all():
+@app_web.route('/status-all/<string:cmd>')
+def status_all(cmd='all'):
     # print('status_all')
-    return jsonify(hardware_info.get_all_status())
+    if cmd == 'all':
+        return jsonify(hardware_info.get_all_status())
+    elif cmd in ('camera', 'balance', 'printer', 'light', 'light_plate', 'lifting', 'fan', 'plate', 'main'):
+        return jsonify({'state': hardware_info.all_status[cmd]})
+    else:
+        return jsonify({"error": "404 [check you url]"})
 
 
 # 总控状态
@@ -104,8 +114,8 @@ def camera(cmd):
         return jsonify({"error": "404 [check you url]"})
 
 
-# 实时图像 b''
-@app_web.route('/realtime_img')
+# 实时图像
+@app_web.route('/realtime-img')
 def realtime_img():
     return Response(hardware_info.capture.gen_stream(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
@@ -290,6 +300,24 @@ def printer(cmd):
         return jsonify({'state': "ok"})
 
 
+@app_web.route('/restart')
+def restart():
+    import os
+    import sys
+
+    # print("重启马上")
+    # os.system('sudo reboot')
+    print("重启代码喽")
+    os.execv(sys.executable, ['python'] + sys.argv)
+
+
+@app_web.route('/reboot')
+def reboot():
+    import os
+    print("重启马上")
+    os.system('sudo reboot')
+
+
 # 参数
 @app_web.route('/results/<string:cmd>', methods=["GET", "POST"])
 def results(cmd):
@@ -298,9 +326,9 @@ def results(cmd):
         print("正在调用算法计算... 2s")
         time.sleep(2)
         # 返回结果
-        cal_results = results.get_image_parameters()
+        cal_results = results_info.get_image_parameters()
         # 算法返回的图片 以 base64 的方式 存储在 imageBase64的属性里。
-        cal_results.update(results.get_image_info())
+        cal_results.update(results_info.get_image_info())
         return jsonify(cal_results)
     else:
         print("检查你的url")
@@ -315,11 +343,107 @@ def hardware_errors():
     return jsonify(hardware_info.get_error_info())
 
 
+def current_progress(pop_plate=False):
+    # print("step 1")
+    print("发送了哈")
+    # yield jsonify({"state": "close the plate"})
+    # print("step 2")
+    # yield jsonify({"state": "finish the weight"})
+    # print("step 3")
+    # yield jsonify({"state": "finish output"})
+    # if pop_plate:
+    #     print("step 4")
+    #     yield jsonify({"state": "finish output"})
+
+
+easy_mode_signal.connect(current_progress)
+
+
+# @app_web.before_request
+# def before_easy_mode():
+#     if '/easy-mode' in request.path:
+#         print("before")
+#         # return jsonify({'state': 'preparation'})
+#     else:
+#         pass
+#
+#
+# @app_web.after_request
+# def after_easy_mode(arg):
+#     if '/easy-mode' in request.path:
+#         # print(arg)
+#         print("after")
+#         a = {'品种号': results_info.get_image_parameters()['品种号'],
+#              '总粒数': results_info.get_image_parameters()['总粒数'],
+#              '千粒重': results_info.get_image_parameters()['千粒重'], }
+#         # a.update(results_info.get_image_info())
+#         # print(a)
+#         return jsonify(a)
+#     else:
+#         pass
+
+
+# 简易模式
+
+@app_web.route('/easy-mode/<string:cmd>')
+def easy_mode(cmd):
+    g = current_progress(True) if cmd == 'all' else current_progress(False)
+    # 步骤1 关闭托盘
+    print("步骤1：确保托盘关闭... 2s")
+    # if drawer.action(True, 8000, 5):
+    #     TODO: 托盘不自锁 可能会弹开
+    #     drawer.motor.set_able_status(True)
+    time.sleep(2)
+    # 修改并返回当前状态
+    # g.__next__()
+    easy_mode_signal.send({"state": "close the plate"})
+
+    # 步骤2 称重
+    print("步骤2：称重.... 2s")
+    # 确保关闭
+    # 下降
+    # 测量
+    # 归位
+    # 修改测量数据
+    time.sleep(2)
+    # 修改并返回当前状态
+    # g.__next__()
+    easy_mode_signal.send({"state": "finish the weight"})
+
+    # 步骤3
+    print("步骤3：图像分析... 2s")
+    # 确保电机均处于合适位置
+    # 循环 退出（算法返回合适结果）
+    #      拍照
+    #      调用算法
+    #      接受算法返回（照片不合适、灯光不合适）
+    # 修改算法结果参数
+    time.sleep(2)
+    # 修改并返回当前状态
+    # g.__next__()
+    easy_mode_signal.send({"state": "finish the image analysis"})
+    if cmd != 'all':
+        return jsonify({'state': 'ok'})
+    if cmd == 'all':
+        print("步骤4：弹出托盘... 2s")
+        # 确保电机抬升至合适位置
+        # 弹出托盘
+        time.sleep(2)
+        # 修改并返回当前状态
+        # g.__next__()
+        easy_mode_signal.send({"state": "open the plate"})
+        return jsonify({'state': 'ok'})
+
+
 # 开机算法版本自检
-print("版本自检")
+print("版本自检 2s")
+time.sleep(2)
 # 开机硬件自检
 print("开机自检")
-hardware_det.like_detect()
-
+hardware_det.like_detect(2)
+time.sleep(2)
+print('自检完成')
+print()
+print('*' * 30)
 if __name__ == '__main__':
-    app_web.run(debug=True, host='0.0.0.0', port=5000)
+    app_web.run(debug=True, host='0.0.0.0', port=hardware_info.system_info['staticIP']['port'])

@@ -199,6 +199,7 @@ def be():
   @app.after_request  # 在相应客户端之前
   def af(args):
       print("i'm af")
+      return args
   ```
 
 - djongo中间键

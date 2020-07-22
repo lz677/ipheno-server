@@ -207,11 +207,11 @@ class MotorAction(object):
                 print("%s 初始化完毕" % self.name)
                 return True
             else:
-                if self.goto_position(True, frequency, duty):
+                if self.goto_position(True, duty):
                     print("\n%s 初始化完成" % self.name)
                     return True
         else:
-            if self.goto_position(True, frequency, duty):
+            if self.goto_position(True, duty):
                 print("\n%s 初始化完成" % self.name)
                 return True
         return False
