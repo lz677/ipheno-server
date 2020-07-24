@@ -116,7 +116,7 @@ class WeightSensor(object):
         self.bps = 115200
         self.weight = -1
         self.receive = b''
-        self.uart = Uart(bps=self.bps, device=uart_service)
+        self.uart = Uart(bps=self.bps, device_tty=uart_service)
 
     def get_one_weight(self, timeout: float = 1) -> float:
         """

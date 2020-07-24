@@ -13,12 +13,12 @@ import time
 
 
 class Uart(object):
-    def __init__(self, device, bps=115200):
-        self.device = device
+    def __init__(self, device_tty, bps=115200):
+        self.device_tty = device_tty
         self.bps = bps
 
     def send_message(self, message: bytes):
-        ser = serial.Serial(self.device, self.bps)
+        ser = serial.Serial(self.device_tty, self.bps)
         # 若串口未打开则打开串口
         if not ser.isOpen:
             ser.open()
@@ -43,7 +43,7 @@ class Uart(object):
     #     return b'Do not receive any data'
 
     def send_and_receive(self, message: bytes, timeout: float = 1.0, one_time: bool = True) -> bytes:
-        ser = serial.Serial(self.device, self.bps, timeout=timeout)
+        ser = serial.Serial(self.device_tty, self.bps, timeout=timeout)
         if not ser.isOpen:
             ser.open()
         ser.write(message)  # 发送数据

@@ -267,7 +267,7 @@ def realtime_image():
 # 实时图像 b''
 @app.route('/realtime-img')
 def realtime_img():
-    return Response(app.config['hardware'].capture.gen_stream(),
+    return Response(app.config['hardware'].capture.gen_stream_web(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 

@@ -42,13 +42,13 @@ class CaptureWebCam:
     def start_stream(self):
         self.should_stream_stop = False
 
-    def gen_stream(self):
+    def gen_stream_web(self):
         while not self.will_quit:
             if self.cap.isOpened() and not self.should_stream_stop:
                 # print('get stream')
                 ret, frame = self.read()
                 # if self.save_img:
-                cv2.imwrite('./static/1.jpg', frame)
+                # cv2.imwrite('./static/1.jpg', frame)
 
                 ret, jpeg = cv2.imencode('.jpg', frame)
 
@@ -59,6 +59,19 @@ class CaptureWebCam:
             # else:
             #     yield (b'--frame\r\n'
             #            b'Content-Type: image/jpeg\r\n\r\n' + self.blackJpeg.tobytes() + b'\r\n\r\n')
+
+    def gen_stream(self):
+        while not self.will_quit:
+            if self.cap.isOpened() and not self.should_stream_stop:
+                ret, frame = self.read()
+                # if self.save_img:
+                # cv2.imwrite('./static/1.jpg', frame)
+
+                ret, jpeg = cv2.imencode('.jpg', frame)
+
+                yield jpeg.tobytes()
+            else:
+                time.sleep(0.5)
 
     def return_img_stream(self):
         while not self.will_quit:
