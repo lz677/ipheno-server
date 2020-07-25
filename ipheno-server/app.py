@@ -84,10 +84,10 @@ def system(cmd):
 @app.route('/open-camera')
 def open_camera():
     # print('open_camera')
-    if not app.config['hardware'].capture.isOpened():
+    if not app.config['hardware'].capture.is_opened():
         app.config['hardware'].capture.open()
     app.config['hardware'].capture.start_stream()
-    return 'ok' if app.config['hardware'].capture.isOpened() else 'failed'
+    return 'ok' if app.config['hardware'].capture.is_opened() else 'failed'
     # return (jsonify({'state': "ok"}) if app.config['hardware'].capture.isOpened()
     #         else jsonify({'state': "failed"}))  # ok, failed
 
@@ -253,7 +253,7 @@ def printer(cmd):
 # 实时图像 base64
 @app.route('/realtime-image')
 def realtime_image():
-    if not app.config['hardware'].capture.isOpened():
+    if not app.config['hardware'].capture.is_opened():
         app.config['hardware'].capture.open()
     app.config['hardware'].capture.start_stream()
     # # img_path = './static/1.jpg'

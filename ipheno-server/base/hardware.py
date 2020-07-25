@@ -82,11 +82,11 @@ class Hardware:
         return self.system_info.copy()
 
     def get_all_status(self) -> dict:
-        self.all_status['capture'] = '已连接' if self.capture.isOpened() else '未连接'
+        self.all_status['capture'] = '已连接' if self.capture.is_opened() else '未连接'
         return self.all_status.copy()
 
     def get_init_status(self) -> dict:
-        self.init_status['capture'] = '已连接' if self.capture.isOpened() else '未连接'
+        self.init_status['capture'] = '已连接' if self.capture.is_opened() else '未连接'
         return self.init_status.copy()
 
     def get_error_info(self):

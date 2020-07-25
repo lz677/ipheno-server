@@ -10,6 +10,11 @@
 """
 
 import time
+import json
+import os
+import sys
+import logging
+import logging.config
 import hardware_detect
 from flask import Flask, render_template, Response, request, send_file, redirect
 from flask.json import jsonify
@@ -23,6 +28,12 @@ from base import Results
 from base import utility
 from base import easy_mode
 from threading import Lock
+
+path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config\\logging.conf')
+# print(path)
+# 日志
+logging.config.fileConfig(path)
+logger = logging.getLogger('iphenoDebug')
 
 app_web = Flask(__name__)
 app_web.register_blueprint(easy_mode.easy_mode_app)
@@ -43,6 +54,7 @@ def error404(args):
 # web端主页面
 @app_web.route('/')
 def main_page():
+    logger.info("fangwenle")
     return render_template('index.html')
 
 
@@ -80,10 +92,14 @@ def system(cmd):
                 # TODO：树莓派执行静态IP覆盖
                 # 硬件操作 用3s 占空
                 print("修改ip地址和端口中，等待3s")
+                utility.network_setup(ip, '255.255.255.0', '192.168.0.255')
                 time.sleep(3)
                 hardware_info.system_info["staticIP"]["ip"] = request.args.get("staticIp")
                 hardware_info.system_info["staticIP"]["port"] = request.args.get("port")
-                return jsonify({"state": "ok"})
+                if utility.save_info_to_json(hardware_info, './config/main_control.json'):
+                    return jsonify({"state": "ok"})
+                else:
+                    return jsonify({"state": "failed"})
             else:
                 return jsonify({"state": "default"})
 
@@ -101,10 +117,10 @@ def system(cmd):
 def camera(cmd):
     if cmd == 'open':
         print('打开相机')
-        if not hardware_info.capture.isOpened():
+        if not hardware_info.capture.is_opened():
             hardware_info.capture.open()
         hardware_info.capture.start_stream()
-        return (jsonify({'state': "ok"}) if hardware_info.capture.isOpened() else jsonify(
+        return (jsonify({'state': "ok"}) if hardware_info.capture.is_opened() else jsonify(
             {'state': "failed"}))  # ok, failed
     elif cmd == 'close':
         print("关闭相机")
@@ -119,7 +135,7 @@ def camera(cmd):
 # 实时图像
 @app_web.route('/realtime-img')
 def realtime_img():
-    if not hardware_info.capture.isOpened():
+    if not hardware_info.capture.is_opened():
         hardware_info.capture.open()
     hardware_info.capture.start_stream()
     return Response(hardware_info.capture.gen_stream_web(), mimetype='multipart/x-mixed-replace; boundary=frame')
@@ -127,7 +143,7 @@ def realtime_img():
 
 @app_web.route('/realtime-img-app')
 def realtime_img_app():
-    if not hardware_info.capture.isOpened():
+    if not hardware_info.capture.is_opened():
         hardware_info.capture.open()
     hardware_info.capture.start_stream()
     hardware_info.capture.gen_stream_web()
@@ -304,11 +320,13 @@ def printer(cmd):
     print the  results
     :return:
     """
-    if cmd == "connect":
-        print("打印机连接中...... 2s")
+    if cmd == "status":
+        print("查询打印机状态中")
         time.sleep(2)
         return jsonify({'state': "connected"})
     if cmd == 'print':
+        # 查询打印机状态 0 表示正常
+        # 正常则打印 异常则返回前端
         print("打印中...... 2s")
         time.sleep(2)
         return jsonify({'state': "ok"})
@@ -316,20 +334,22 @@ def printer(cmd):
 
 @app_web.route('/restart')
 def restart():
-    import os
-    import sys
-
-    # print("重启马上")
-    # os.system('sudo reboot')
     print("重启代码喽")
-    os.execv(sys.executable, ['python'] + sys.argv)
+    if utility.save_info_to_json(hardware_info, './config/main_control.json'):
+        time.sleep(1)
+        os.execv(sys.executable, ['python'] + sys.argv)
+    else:
+        return {'state': 'failed'}
 
 
 @app_web.route('/reboot')
 def reboot():
-    import os
     print("重启马上")
-    os.system('sudo reboot')
+    if utility.save_info_to_json(hardware_info, './config/main_control.json'):
+        time.sleep(1)
+        os.system('sudo reboot')
+    else:
+        return {'state': 'failed'}
 
 
 # 参数
@@ -357,103 +377,90 @@ def hardware_errors():
     return jsonify(hardware_info.get_error_info())
 
 
-# @app_web.after_request
-# def after_easy_mode5(arg):
-#     if '/easy-mode' in request.path:
-#         # print(arg)
-#         print("after")
-#         a = {'品种号': results_info.get_image_parameters()['品种号'],
-#              '总粒数': results_info.get_image_parameters()['总粒数'],
-#              '千粒重': results_info.get_image_parameters()['千粒重'], }
-#         # a.update(results_info.get_image_info())
-#         # print(a)
-#         return jsonify(a)
-#     else:
-#         pass
-
-#
-# @app_web.after_request
-# def after_easy_mode4(arg):
-#     if '/easy-mode/all' in request.path:
-#         print("步骤4：弹出托盘... 2s")
-#         # 确保电机抬升至合适位置
-#         # 弹出托盘
-#         time.sleep(2)
-#         # 修改并返回当前状态
-#         return jsonify({"state": "open the plate"})
-#     else:
-#         pass
-#
-#
-# @app_web.after_request
-# def after_easy_mode3(arg):
-#     if '/easy-mode' in request.path:
-#         # 步骤3
-#         print("步骤3：图像分析... 2s")
-#         # 确保电机均处于合适位置
-#         # 循环 退出（算法返回合适结果）
-#         #      拍照
-#         #      调用算法
-#         #      接受算法返回（照片不合适、灯光不合适）
-#         # 修改算法结果参数
-#         time.sleep(2)
-#         # 修改并返回当前状态
-#         # g.__next__()
-#         return jsonify({"state": "finish the image analysis"})
-#     else:
-#         pass
-#
-#
-# @app_web.after_request
-# def after_easy_mode2(arg):
-#     if '/easy-mode' in request.path:
-#         # 步骤2 称重
-#         print("步骤2：称重.... 2s")
-#         # 确保关闭
-#         # 下降
-#         # 测量
-#         # 归位
-#         # 修改测量数据
-#         time.sleep(2)
-#         # 修改并返回当前状态
-#         # g.__next__()
-#         return jsonify({"state": "finish the weight"})
-#     else:
-#         pass
-
-
 # 简易模式
 @app_web.route('/easy-mode/<string:cmd>')
 def easy_mode(cmd):
-    # 步骤1 关闭托盘
-    print("步骤1：确保托盘关闭... 2s")
-    # if drawer.action(True, 8000, 5):
-    #     TODO: 托盘不自锁 可能会弹开
-    #     drawer.motor.set_able_status(True)
-    time.sleep(2)
-    # 修改并返回当前状态
-    return jsonify({"state": "close the plate"})
+    if cmd == 'all':
+        # 步骤1 关闭托盘
+        print("步骤1：确保托盘关闭... 2s")
+        # if drawer.action(True, 8000, 5):
+        #     TODO: 托盘不自锁 可能会弹开
+        #     drawer.motor.set_able_status(True)
+        time.sleep(2)
+        # 修改并返回当前状态
+        # return jsonify({"state": "close the plate"})
+
+        # 步骤2 称重
+        print("步骤2：称重.... 2s")
+        # 确保关闭
+        # 下降
+        # 测量
+        # 归位
+        # 修改测量数据
+        time.sleep(2)
+        # 修改并返回当前状态
+
+        # 步骤3
+        print("步骤3：图像分析... 2s")
+        # 确保电机均处于合适位置
+        # 循环 退出（算法返回合适结果）
+        #      拍照
+        #      调用算法
+        #      接受算法返回（照片不合适、灯光不合适）
+        # 修改算法结果参数
+        time.sleep(2)
+        # 修改并返回当前状态
+        return jsonify({"state": "ok"})
+
+    if cmd == 'all':
+        print("步骤4：弹出托盘... 2s")
+        # 确保电机抬升至合适位置
+        # 弹出托盘
+        time.sleep(2)
+        # 修改并返回当前状态
+        return jsonify({"state": "ok"})
+
+
+@app_web.route('/process/<string:cmd>')
+def process(cmd):
+    if cmd == 'easy-mode':
+        return jsonify({'state': ''})
 
 
 # TODO: 加锁和增加png格式
 @app_web.route('/img/<string:image_name>')
 def img_realtime(image_name):
     if image_name.endswith(".jpg"):
-        if not hardware_info.capture.isOpened():
+        if not hardware_info.capture.is_opened():
             hardware_info.capture.open()
         hardware_info.capture.start_stream()
         return Response(hardware_info.capture.gen_stream(), mimetype="image/jpg")
+    if image_name == 'static-img':
+        if not hardware_info.capture.is_opened():
+            hardware_info.capture.open()
+        hardware_info.capture.start_stream()
+        return Response(hardware_info.capture.gen_stream(False), mimetype="image/png")
+
+
+# 更新模型
+@app_web.route('/update-project')
+def update_project():
+    utility.update_project('/home/pi/Documents/hh')
+    return 'ok'
 
 
 if __name__ == '__main__':
-    # 开机算法版本自检
     print("版本自检 2s")
     time.sleep(2)
     # 开机硬件自检
     print("开机自检")
     hardware_det.like_detect(2)
     time.sleep(2)
+    print("读取配置")
+    utility.read_info_from_json(hardware_info)
+    time.sleep(2)
     print('自检完成')
     print()
     print('*' * 30)
+    # 开机算法版本自检
     app_web.run(debug=True, host='0.0.0.0', port=hardware_info.system_info['staticIP']['port'])

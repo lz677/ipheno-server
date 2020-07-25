@@ -30,7 +30,7 @@ class CaptureWebCam:
     def open(self, _id=0):
         self.cap.open(_id)
 
-    def isOpened(self) -> bool:
+    def is_opened(self) -> bool:
         return self.cap.isOpened()
 
     def read(self) -> (bool, np.ndarray):
@@ -60,18 +60,14 @@ class CaptureWebCam:
             #     yield (b'--frame\r\n'
             #            b'Content-Type: image/jpeg\r\n\r\n' + self.blackJpeg.tobytes() + b'\r\n\r\n')
 
-    def gen_stream(self):
-        while not self.will_quit:
-            if self.cap.isOpened() and not self.should_stream_stop:
-                ret, frame = self.read()
-                # if self.save_img:
-                # cv2.imwrite('./static/1.jpg', frame)
-
-                ret, jpeg = cv2.imencode('.jpg', frame)
-
-                yield jpeg.tobytes()
-            else:
-                time.sleep(0.5)
+    def gen_stream(self, is_jpg=True):
+        if self.cap.isOpened() and not self.should_stream_stop:
+            ret, frame = self.read()
+            # frame = cv2.resize(frame, (200, 200))
+            ret, img = cv2.imencode('.jpg', frame) if is_jpg else cv2.imencode('.png', frame)
+            return img.tobytes()
+        else:
+            time.sleep(0.5)
 
     def return_img_stream(self):
         while not self.will_quit:
